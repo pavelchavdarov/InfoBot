@@ -3,6 +3,10 @@ import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.TimerTask;
 
@@ -10,11 +14,12 @@ import java.util.TimerTask;
  * Created by Павел on 05.08.2017.
  */
 public class Messager extends TimerTask {
-    private long chatId;
+    private InfoBot bot;
     private ReplyKeyboard repKeyboard;
+    private Connection connection;
 
-    public Messager(long chatId) {
-        this.chatId = chatId;
+    public Messager() {
+        this.connection = DAO.getConnection();
     }
 
     //    TODO: сделать конфигуратор клавиатуры
@@ -37,10 +42,38 @@ public class Messager extends TimerTask {
     public void run() {
         //TODO:
         //chatId и текст_сообщения нужно юрать из хранилища (DB?)
-        SendMessage message = new SendMessage()
-                .setChatId(chatId)
-                .setText("Очередное сообщение")
-                .setReplyMarkup(repKeyboard);
+        PreparedStatement prepStatment = null;
+        String chat = null;
+        String msg = "";
+        System.out.println("работает таск");
+        try {
+            prepStatment = connection.prepareStatement("select s.chat_id chat, m.msg msg " +
+                    "from subscribers s, messages m " +
+                    "where current_timestamp - (s.reg_date + m.timeshift) > '0 minute'::interval " +
+                    "and current_timestamp - (s.reg_date + m.timeshift) < '1 minute'::interval");
+            ResultSet rs = prepStatment.executeQuery();
 
+            while(rs.next()){
+                chat = rs.getString("chat");
+                msg = rs.getString("msg");
+                System.out.println("Шлем сообщение '" + msg + "' в чат "+chat);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (chat != null) {
+            SendMessage message = new SendMessage()
+                    .setChatId(Long.valueOf(chat))
+                    .setText(msg)
+                    .setReplyMarkup(repKeyboard);
+        }
+    }
+
+    public InfoBot getBot() {
+        return bot;
+    }
+
+    public void setBot(InfoBot bot) {
+        this.bot = bot;
     }
 }
