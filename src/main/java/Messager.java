@@ -1,6 +1,7 @@
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.sql.Connection;
@@ -28,7 +29,7 @@ public class Messager extends TimerTask {
 
         ArrayList<KeyboardRow> keys = new ArrayList<KeyboardRow>();
         KeyboardRow keyRow = new KeyboardRow();
-        keyRow.add(0,"Консультация");
+        keyRow.add(0,"Отписаться");
         keyRow.add(1, "Тренинг");
         keyRow.add(2, "Свалить");
         keys.add(keyRow);
@@ -56,7 +57,8 @@ public class Messager extends TimerTask {
             while(rs.next()){
                 chat = rs.getString("chat");
                 msg = rs.getString("msg");
-                System.out.println("Шлем сообщение '" + msg + "' в чат "+chat);
+//                System.out.println("Шлем сообщение '" + msg + "' в чат "+chat);
+                bot.sendMessageToChat(msg, Long.valueOf(chat));
             }
         } catch (Exception e) {
             e.printStackTrace();
